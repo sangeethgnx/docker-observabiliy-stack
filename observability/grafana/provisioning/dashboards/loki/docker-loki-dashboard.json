@@ -25,7 +25,7 @@
       {
         "name": "level",
         "type": "custom",
-        "query": "ALL : .* , INFO : INFO , WARN : WARN , ERROR : ERROR",
+        "query": "INFO : INFO , WARN : WARN , ERROR : ERROR",
         "includeAll": true,
         "allValue": ".*",
         "current": {
