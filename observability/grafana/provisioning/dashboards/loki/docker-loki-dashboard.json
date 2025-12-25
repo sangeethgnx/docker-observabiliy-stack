@@ -1,0 +1,93 @@
+{
+  "uid": "docker-loki-logs",
+  "title": "Docker Containers – Loki Logs",
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 2,
+  "refresh": "10s",
+  "tags": ["docker", "loki", "logs"],
+  "templating": {
+    "list": [
+      {
+        "name": "container",
+        "type": "query",
+        "datasource": "Loki",
+        "query": "label_values({container=~\".+\", container=~\".+\"}, container)",
+        "refresh": 1,
+        "includeAll": true,
+        "allValue": ".+",
+        "multi": true,
+        "current": {
+          "text": ["All"],
+          "value": [".+"]
+        }
+      },
+      {
+        "name": "level",
+        "type": "custom",
+        "query": "ALL : .* , INFO : INFO , WARN : WARN , ERROR : ERROR",
+        "includeAll": true,
+        "allValue": ".*",
+        "current": {
+          "text": "ALL",
+          "value": ".*"
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "logs",
+      "title": "Container Logs",
+      "datasource": "Loki",
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 10 },
+      "options": {
+        "showTime": true,
+        "showLabels": true,
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "expr": "{container=~\"$container\"} |~ \"$level\"",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Log Rate by Container (logs/sec)",
+      "datasource": "Loki",
+      "gridPos": { "x": 0, "y": 10, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "sum by (container) (rate({container=~\"$container\"}[1m]))",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Error Rate by Container",
+      "datasource": "Loki",
+      "gridPos": { "x": 12, "y": 10, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "sum by (container) (rate({container=~\"$container\"} |~ \"ERROR\"[1m]))",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "barchart",
+      "title": "Top Noisy Containers (logs/sec)",
+      "datasource": "Loki",
+      "gridPos": { "x": 0, "y": 18, "w": 24, "h": 8 },
+      "targets": [
+        {
+          "expr": "topk(5, sum by (container) (rate({container=~\"$container\"}[1m])))",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}
