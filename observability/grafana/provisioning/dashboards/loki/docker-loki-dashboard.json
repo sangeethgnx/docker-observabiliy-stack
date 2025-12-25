@@ -9,6 +9,21 @@
   "templating": {
     "list": [
       {
+        "name": "host",
+        "type": "query",
+        "datasource": "Loki",
+        "label": "Host",
+        "query": "label_values({host=~\".+\", container=~\".+\"}, host)",
+        "refresh": 2,
+        "includeAll": true,
+        "allValue": ".+",
+        "multi": false,
+        "current": {
+          "text": "All",
+          "value": ".+"
+        }
+      },
+      {
         "name": "container",
         "type": "query",
         "datasource": "Loki",
