@@ -1,191 +1,110 @@
 {
-  "__inputs": [
-    {
-      "name": "DS_LOKI",
-      "label": "Loki",
-      "description": "",
-      "type": "datasource",
-      "pluginId": "loki",
-      "pluginName": "Loki"
-    }
-  ],
-  "__elements": {},
-  "__requires": [
-    {
-      "type": "grafana",
-      "id": "grafana",
-      "name": "Grafana",
-      "version": "10.4.3"
-    },
-    {
-      "type": "panel",
-      "id": "logs",
-      "name": "Logs",
-      "version": ""
-    },
-    {
-      "type": "datasource",
-      "id": "loki",
-      "name": "Loki",
-      "version": "1.0.0"
-    }
-  ],
-  "annotations": {
+  "uid": "docker-loki-logs",
+  "title": "Docker Containers – Loki Logs",
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "version": 1,
+  "refresh": "10s",
+  "tags": ["docker", "loki", "logs"],
+  "templating": {
     "list": [
       {
-        "builtIn": 1,
-        "datasource": {
-          "type": "grafana",
-          "uid": "-- Grafana --"
-        },
-        "enable": true,
-        "hide": true,
-        "iconColor": "rgba(0, 211, 255, 1)",
-        "name": "Annotations & Alerts",
-        "type": "dashboard"
+        "name": "host",
+        "type": "query",
+        "datasource": "Loki",
+        "label": "Host",
+        "query": "label_values({host=~\".+\"}, host)",
+        "refresh": 2,
+        "includeAll": true,
+        "allValue": ".+",
+        "multi": false,
+        "current": {
+          "text": "All",
+          "value": ".+"
+        }
+      },
+      {
+        "name": "container",
+        "type": "query",
+        "datasource": "Loki",
+        "label": "Container",
+        "query": "label_values({host=~\"$host\"}, container)",
+        "refresh": 2,
+        "includeAll": true,
+        "allValue": ".+",
+        "multi": true,
+        "current": {
+          "text": ["All"],
+          "value": [".+"]
+        }
+      },
+      {
+        "name": "level",
+        "type": "custom",
+        "label": "Log Level",
+        "query": "INFO : INFO , WARN : WARN , ERROR : ERROR",
+        "includeAll": true,
+        "allValue": ".*",
+        "current": {
+          "text": "ALL",
+          "value": ".*"
+        }
       }
     ]
   },
-  "editable": true,
-  "fiscalYearStartMonth": 0,
-  "graphTooltip": 0,
-  "id": null,
-  "links": [],
   "panels": [
     {
-      "datasource": {
-        "type": "loki",
-        "uid": "${DS_LOKI}"
-      },
-      "gridPos": {
-        "h": 30,
-        "w": 24,
-        "x": 0,
-        "y": 0
-      },
-      "id": 1,
+      "type": "logs",
+      "title": "Container Logs",
+      "datasource": "Loki",
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 10 },
       "options": {
-        "dedupStrategy": "none",
-        "enableLogDetails": true,
-        "prettifyLogMessage": false,
-        "showCommonLabels": false,
-        "showLabels": true,
         "showTime": true,
-        "sortOrder": "Descending",
+        "showLabels": true,
         "wrapLogMessage": true
       },
       "targets": [
         {
-          "expr": "{container=~\"$container\"} |~ \"$level\"",
-          "refId": "A",
-          "datasource": {
-            "type": "loki",
-            "uid": "${DS_LOKI}"
-          }
+          "expr": "{host=~\"$host\", container=~\"$container\"} |~ \"$level\"",
+          "refId": "A"
         }
-      ],
-      "title": "Container Logs",
-      "type": "logs"
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Log Rate by Container (logs/sec)",
+      "datasource": "Loki",
+      "gridPos": { "x": 0, "y": 10, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "sum by (container) (rate({host=~\"$host\", container=~\"$container\"}[1m]))",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Error Rate by Container",
+      "datasource": "Loki",
+      "gridPos": { "x": 12, "y": 10, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "sum by (container) (rate({host=~\"$host\", container=~\"$container\"} |~ \"ERROR\"[1m]))",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "type": "barchart",
+      "title": "Top Noisy Containers (logs/sec)",
+      "datasource": "Loki",
+      "gridPos": { "x": 0, "y": 18, "w": 24, "h": 8 },
+      "targets": [
+        {
+          "expr": "topk(5, sum by (container) (rate({host=~\"$host\", container=~\"$container\"}[1m])))",
+          "refId": "A"
+        }
+      ]
     }
-  ],
-  "refresh": "10s",
-  "schemaVersion": 39,
-  "tags": [],
-  "templating": {
-    "list": [
-      {
-        "allValue": ".*",
-        "current": {},
-        "datasource": {
-          "type": "loki",
-          "uid": "${DS_LOKI}"
-        },
-        "definition": "",
-        "hide": 0,
-        "includeAll": true,
-        "label": "Host",
-        "multi": false,
-        "name": "host",
-        "options": [],
-        "query": {
-          "label": "host",
-          "refId": "LokiVariableQueryEditor-VariableQuery",
-          "stream": "",
-          "type": 1
-        },
-        "refresh": 2,
-        "regex": "",
-        "skipUrlSync": false,
-        "sort": 0,
-        "type": "query"
-      },
-      {
-        "allValue": ".+",
-        "current": {},
-        "datasource": {
-          "type": "loki",
-          "uid": "${DS_LOKI}"
-        },
-        "definition": "",
-        "hide": 0,
-        "includeAll": true,
-        "multi": true,
-        "name": "container",
-        "options": [],
-        "query": "label_values({container=~\".+\"}, container)",
-        "refresh": 1,
-        "regex": "",
-        "skipUrlSync": false,
-        "sort": 0,
-        "type": "query"
-      },
-      {
-        "allValue": ".*",
-        "current": {
-          "selected": false,
-          "text": "All",
-          "value": "$__all"
-        },
-        "hide": 0,
-        "includeAll": true,
-        "multi": false,
-        "name": "level",
-        "options": [
-          {
-            "selected": true,
-            "text": "All",
-            "value": "$__all"
-          },
-          {
-            "selected": false,
-            "text": "INFO",
-            "value": "INFO"
-          },
-          {
-            "selected": false,
-            "text": "WARN",
-            "value": "WARN"
-          },
-          {
-            "selected": false,
-            "text": "ERROR",
-            "value": "ERROR"
-          }
-        ],
-        "query": "INFO : INFO , WARN : WARN , ERROR : ERROR",
-        "skipUrlSync": false,
-        "type": "custom"
-      }
-    ]
-  },
-  "time": {
-    "from": "now-6h",
-    "to": "now"
-  },
-  "timepicker": {},
-  "timezone": "browser",
-  "title": "Docker Containers – Loki Logs Copy",
-  "uid": "ff8jvkuj9v4zkf",
-  "version": 1,
-  "weekStart": ""
+  ]
 }
